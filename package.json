@@ -1,0 +1,45 @@
+{
+  "name": "url-shortner",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "react-router build",
+    "cf-typegen": "wrangler types",
+    "deploy": "npm run build && wrangler deploy",
+    "dev": "react-router dev",
+    "postinstall": "npm run cf-typegen",
+    "preview": "npm run build && vp preview",
+    "typecheck": "npm run cf-typegen && react-router typegen && tsc -b",
+    "db:generate": "npx drizzle-kit generate",
+    "db:migrate": "npx wrangler d1 migrations apply url-shortener-db",
+    "db:migrate-remote": "npx wrangler d1 migrations apply url-shortener-db --remote"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.2",
+    "isbot": "^5.1.31",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "react-router": "^7.10.0"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.13.5",
+    "@cloudflare/workers-types": "^4.20260329.1",
+    "@react-router/dev": "^7.10.0",
+    "@tailwindcss/vite": "^4.1.13",
+    "@types/node": "^22.19.15",
+    "@types/react": "^19.1.13",
+    "@types/react-dom": "^19.1.9",
+    "drizzle-kit": "^0.31.10",
+    "tailwindcss": "^4.1.13",
+    "typescript": "^5.9.3",
+    "vite": "npm:@voidzero-dev/vite-plus-core@latest",
+    "vite-plus": "latest",
+    "vite-tsconfig-paths": "^5.1.4",
+    "wrangler": "^4.78.0"
+  },
+  "overrides": {
+    "vite": "npm:@voidzero-dev/vite-plus-core@latest",
+    "vitest": "npm:@voidzero-dev/vite-plus-test@latest"
+  },
+  "packageManager": "npm@11.12.1"
+}
