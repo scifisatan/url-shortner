@@ -6,6 +6,7 @@ A full-stack URL shortener built with React Router 7, deployed as a Cloudflare W
 
 - Creates short codes for submitted URLs.
 - Redirects short URLs to their original destination.
+- Validates redirect destinations as http(s) before issuing a redirect.
 - Applies rate limiting to URL creation.
 - Renders a server-side React app on Cloudflare Workers.
 
@@ -31,6 +32,12 @@ The app stores URL mappings in Cloudflare KV:
 
 - key: u:<shortCode>
 - value: original URL (string)
+
+Short codes are generated as fixed-length random alphanumeric values (10 characters).
+
+Cloudflare KV is eventually consistent. A newly-created short URL can return 404 briefly, especially when read from a different region immediately after creation.
+
+Cloudflare KV also does not support atomic conditional writes. This app reduces collision risk with longer random codes and retry logic, but at very high concurrency a write race can still overwrite a mapping.
 
 Created links are intentionally not listed publicly. Users must save generated short URLs when created.
 
@@ -117,6 +124,7 @@ vp exec wrangler versions deploy
 ## Notes
 
 - Cloudflare KV is bound as URLS in wrangler.jsonc.
+- wrangler.jsonc includes preview_id for URLS and currently points to the same namespace as id. Replace preview_id with a dedicated non-production KV namespace ID before using wrangler dev --remote or preview deployments.
 - Cloudflare Rate Limiting is bound as CREATE_RATE_LIMITER in wrangler.jsonc.
 - Set a unique ratelimit namespace_id for your Cloudflare account before deployment.
 - The app runs in SSR mode via React Router config in react-router.config.ts.

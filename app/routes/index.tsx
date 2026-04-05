@@ -2,6 +2,11 @@ import type { Route } from "./+types/index";
 
 import { useEffect, useState } from "react";
 import { Form, useActionData, useNavigation } from "react-router";
+import {
+  createShortCode,
+  normalizeHttpUrl,
+  shortCodeToKey,
+} from "~/lib/url-shortener";
 import LinkIcon from "~/ui/icon/LinkIcon";
 import ShareIcon from "~/ui/icon/ShareIcon";
 
@@ -11,37 +16,20 @@ type ActionData = {
   enteredUrl?: string;
 };
 
-function normalizeHttpUrl(input: string) {
-  try {
-    const parsed = new URL(input);
-
-    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-      return null;
-    }
-
-    return parsed.toString();
-  } catch {
-    return null;
-  }
-}
-
-function createShortCode(length = 8) {
-  const alphabet =
-    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  const bytes = crypto.getRandomValues(new Uint8Array(length));
-
-  return Array.from(bytes, (value) => alphabet[value % alphabet.length]).join(
-    "",
-  );
-}
+const MAX_RESERVATION_ATTEMPTS = 10;
 
 async function reserveShortCode(kv: KVNamespace, originalUrl: string) {
-  for (let attempt = 0; attempt < 5; attempt += 1) {
+  // KV has no conditional writes, so this is a best-effort retry loop.
+  for (let attempt = 0; attempt < MAX_RESERVATION_ATTEMPTS; attempt += 1) {
     const shortCode = createShortCode();
-    const key = `u:${shortCode}`;
+    const key = shortCodeToKey(shortCode);
     const existingUrl = await kv.get(key, "text");
 
     if (existingUrl) {
+      console.warn("Short code collision detected during KV reservation.", {
+        shortCode,
+        attempt: attempt + 1,
+      });
       continue;
     }
 
