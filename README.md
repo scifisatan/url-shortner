@@ -37,7 +37,7 @@ Short codes are generated as fixed-length random alphanumeric values (10 charact
 
 Cloudflare KV is eventually consistent. A newly-created short URL can return 404 briefly, especially when read from a different region immediately after creation.
 
-Cloudflare KV also does not support atomic conditional writes. This app reduces collision risk with longer random codes and retry logic, but at very high concurrency a write race can still overwrite a mapping.
+Cloudflare KV also does not support atomic conditional writes. This app reduces collision risk with longer random codes, retry logic, and collision/overwrite logging, but at very high concurrency a write race can still overwrite a mapping.
 
 Created links are intentionally not listed publicly. Users must save generated short URLs when created.
 

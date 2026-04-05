@@ -34,6 +34,17 @@ async function reserveShortCode(kv: KVNamespace, originalUrl: string) {
     }
 
     await kv.put(key, originalUrl);
+
+    const persistedUrl = await kv.get(key, "text");
+
+    if (persistedUrl && persistedUrl !== originalUrl) {
+      console.error("Potential KV overwrite race detected after reservation.", {
+        shortCode,
+        attempt: attempt + 1,
+      });
+      continue;
+    }
+
     return shortCode;
   }
 
