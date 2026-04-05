@@ -1,51 +1,45 @@
 # URL Shortener
 
-A full-stack URL shortener built with React Router 7, deployed as a Cloudflare Worker, and backed by Cloudflare D1 via Drizzle ORM.
+A full-stack URL shortener built with React Router 7, deployed as a Cloudflare Worker, and backed by Cloudflare KV with Cloudflare Rate Limiting.
 
 ## What It Does
 
 - Creates short codes for submitted URLs.
 - Redirects short URLs to their original destination.
-- Tracks click counts per short URL.
+- Applies rate limiting to URL creation.
 - Renders a server-side React app on Cloudflare Workers.
 
 ## Tech Stack
 
 - React 19 + React Router 7 (SSR)
 - Cloudflare Workers runtime
-- Cloudflare D1 (SQLite)
-- Drizzle ORM + Drizzle Kit
+- Cloudflare KV
+- Cloudflare Rate Limiting binding
 - Tailwind CSS v4
 - Vite+ toolchain
 
 ## Routes
 
-- /: Home page with URL creation form and list of saved short URLs
-- /:code: Redirect endpoint that looks up the code, increments clicks, and redirects
+- /: Home page with URL creation form and one-time short URL display
+- /:code: Redirect endpoint that looks up the code and redirects
 
 Route config lives in app/routes.ts.
 
-## Database Schema
+## Data Model
 
-The urls table includes:
+The app stores URL mappings in Cloudflare KV:
 
-- id (auto-increment primary key)
-- short_code (unique)
-- original_url
-- created_at
-- clicks (default 0)
+- key: u:<shortCode>
+- value: original URL (string)
 
-Schema definition: app/db/schema.ts
-Drizzle config: drizzle.config.ts
-Migrations output: migrations/
+Created links are intentionally not listed publicly. Users must save generated short URLs when created.
 
 ## Project Structure
 
-- app/routes/home.tsx: Form, list view, create URL action, load all URLs
-- app/routes/redirect.tsx: Code lookup, click increment, redirect
-- app/db/: Database schema and Drizzle client factory
+- app/routes/index.tsx: Form, create URL action, one-time result display
+- app/routes/redirect.tsx: Code lookup and redirect
 - workers/app.ts: Cloudflare Worker fetch handler and React Router request handling
-- wrangler.jsonc: Worker config and D1 binding
+- wrangler.jsonc: Worker config, KV, and rate limiter bindings
 
 ## Prerequisites
 
@@ -122,6 +116,7 @@ vp exec wrangler versions deploy
 
 ## Notes
 
-- Cloudflare D1 is bound as DB in wrangler.jsonc.
-- Existing migration files are under migrations/.
+- Cloudflare KV is bound as URLS in wrangler.jsonc.
+- Cloudflare Rate Limiting is bound as CREATE_RATE_LIMITER in wrangler.jsonc.
+- Set a unique ratelimit namespace_id for your Cloudflare account before deployment.
 - The app runs in SSR mode via React Router config in react-router.config.ts.
